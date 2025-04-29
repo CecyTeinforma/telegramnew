@@ -58,7 +58,7 @@ def obtener_respuesta_chatgpt(mensaje_usuario):
 
     except Exception as e:
         print("❌ Error al obtener respuesta de ChatGPT:", e)
-        return "Lo siento, no pude entender tu mensaje en este momento. 😔"
+        return "Lo siento, por ahora no pude entender tu mensaje en este momento. 😔"
 
 def enviar_mensaje_telegram(chat_id, texto):
     payload = {
