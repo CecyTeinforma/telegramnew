@@ -54,11 +54,13 @@ def obtener_respuesta_chatgpt(mensaje_usuario):
                 {"role": "user", "content": mensaje_usuario}
             ]
         )
+        print(f"📤 Respuesta de OpenAI: {response}")  # Agregar log de respuesta
         return response['choices'][0]['message']['content']
 
     except Exception as e:
         print("❌ Error al obtener respuesta de ChatGPT:", e)
         return "Lo siento, por ahora no pude entender tu mensaje en este momento. 😔"
+
 
 def enviar_mensaje_telegram(chat_id, texto):
     payload = {
