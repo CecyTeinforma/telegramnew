@@ -22,40 +22,44 @@ def home():
     return '✅ CecyBot para Telegram está activo.'
 
 @app.route('/webhook', methods=['POST'])
+@app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.get_json()
+    print("📥 Datos recibidos del webhook:", data)
 
     if "message" in data:
         chat_id = data["message"]["chat"]["id"]
         user_message = data["message"]["text"]
-        
+        print(f"💬 Mensaje recibido: {user_message}")
+
         # Obtener respuesta de ChatGPT
         bot_response = obtener_respuesta_chatgpt(user_message)
-        
+        print(f"🤖 Respuesta generada: {bot_response}")
+
         # Enviar respuesta a Telegram
         enviar_mensaje_telegram(chat_id, bot_response)
 
     return 'ok', 200
 
+
 def obtener_respuesta_chatgpt(mensaje_usuario):
     try:
-        system_prompt = (
-            "Eres Cecy, una amiga cercana y empática. 🧡 "
-            "Ayudas a adolescentes en temas de salud mental, bullying, discriminación, drogas, etc. "
-            "Siempre hablas con cariño, apoyo y usando emojis para transmitir cercanía. 😊"
+        system_message = (
+            "Eres Cecy, una amiga cercana y empática. 🧡 Ayudas a adolescentes con temas delicados..."
         )
 
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": system_prompt},
+                {"role": "system", "content": system_message},
                 {"role": "user", "content": mensaje_usuario}
             ]
         )
         return response['choices'][0]['message']['content']
+
     except Exception as e:
-        print("Error al consultar ChatGPT:", e)
-        return "😔 Lo siento, no pude responder en este momento."
+        print("❌ Error al obtener respuesta de ChatGPT:", e)
+        return "Lo siento, no pude entender tu mensaje en este momento. 😔"
 
 def enviar_mensaje_telegram(chat_id, texto):
     payload = {
