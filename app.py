@@ -18,12 +18,15 @@ TELEGRAM_API_URL = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
 openai.api_key = OPENAI_API_KEY
 WEBHOOK_URL = 'https://cecytelegram.onrender.com/webhook'  # URL de tu webhook
 
-# Configurar el webhook al iniciar el servidor
+# Configurar el webhook de Telegram
 def set_telegram_webhook():
     url = f'https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook'
     payload = {'url': WEBHOOK_URL}
     response = requests.post(url, json=payload)
     print("Respuesta de Telegram al configurar el webhook:", response.json())
+
+# Llamar a esta función cuando inicie el servidor
+set_telegram_webhook()
 
 @app.route('/', methods=['GET'])
 def home():
@@ -55,7 +58,7 @@ def obtener_respuesta_chatgpt(mensaje_usuario):
             "Eres Cecy, una amiga cercana y empática. 🧡 Ayudas a adolescentes con temas delicados como drogadicción, bullying, embarazo no deseado, etc. Siempre usas un tono amable y cercano."
         )
 
-        response = openai.ChatCompletion.create(
+        response = openai.chat_completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": system_message},
