@@ -22,7 +22,6 @@ def home():
     return '✅ CecyBot para Telegram está activo.'
 
 @app.route('/webhook', methods=['POST'])
-@app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.get_json()
     print("📥 Datos recibidos del webhook:", data)
@@ -45,7 +44,7 @@ def webhook():
 def obtener_respuesta_chatgpt(mensaje_usuario):
     try:
         system_message = (
-            "Eres Cecy, una amiga cercana y empática. 🧡 Ayudas a adolescentes con temas delicados..."
+            "Eres Cecy, una amiga cercana y empática. 🧡 Ayudas a adolescentes con temas delicados como drogadicción, bullying, embarazo no deseado, etc. Siempre usas un tono amable y cercano."
         )
 
         response = openai.ChatCompletion.create(
@@ -71,4 +70,4 @@ def enviar_mensaje_telegram(chat_id, texto):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
-
+    
