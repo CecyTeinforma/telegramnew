@@ -68,6 +68,6 @@ def enviar_mensaje_telegram(chat_id, texto):
     response = requests.post(TELEGRAM_API_URL, json=payload)
     print("Respuesta de Telegram:", response.text)
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001, debug=True)
+#if __name__ == '__main__':
+#   app.run(host='0.0.0.0', port=5001, debug=True)
     
