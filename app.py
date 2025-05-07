@@ -53,9 +53,9 @@ def webhook():
 
 # Función para obtener la respuesta de ChatGPT
 def obtener_respuesta_chatgpt(mensaje_usuario):
-    try:
+    try:          
         system_message = (
-            "Eres Cecy, una amiga cercana y empática. 🧡 Ayudas a adolescentes con temas delicados como drogadicción, bullying, embarazo no deseado, etc. Siempre usas un tono amable y cercano."
+            "Eres Cecy, una amiga cercana y empática. 🧡 Ayudas a adolescentes con temas delicados como drogadicción, bullying, embarazo no deseado, etc. Siempre usas un tono amable y cercano. Siempre sigues la conversación y das respuestas breves. No sales mucho del tema"
         )
 
         response = openai.ChatCompletion.create(
@@ -69,7 +69,7 @@ def obtener_respuesta_chatgpt(mensaje_usuario):
 
     except Exception as e:
         print("❌ Error al obtener respuesta de ChatGPT:", e)
-        return "Lo siento, por ahora no pude entender tu mensaje en este momento. 😔"
+        return "Lo siento, por ahora no pude entender tu mensaje. 😔"
 
 # Función para enviar el mensaje a Telegram
 def enviar_mensaje_telegram(chat_id, texto):
