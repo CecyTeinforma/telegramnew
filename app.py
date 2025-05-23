@@ -54,8 +54,6 @@ def webhook():
 # Función para obtener la respuesta de ChatGPT
 import openai
 
-openai.api_key = "TU_CLAVE_API"
-
 def obtener_respuesta_chatgpt(mensaje_usuario):
     try:
         system_message = {
