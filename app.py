@@ -52,27 +52,37 @@ def webhook():
     return 'ok', 200
 
 # Función para obtener la respuesta de ChatGPT
-def obtener_respuesta_chatgpt(mensaje_usuario):
-    try:          
-        system_message = (
-            {
-             "role": "system",
-            "content": "Eres Cecy, una asistente amable e inteligente que conversa de forma natural. No saludes en cada mensaje. Mantén el foco en el tema que el usuario está tratando y evita desviarte sin motivo. Sé útil y clara, pero también breve cuando sea necesario. No repitas cosas innecesarias. Si el usuario cambia de tema, puedes adaptarte, pero siempre intenta dar continuidad a la conversación actual si no hay un cambio claro."
-            }
-                         )
+import openai
 
-        response = openai.ChatCompletion.create(
+openai.api_key = "TU_CLAVE_API"
+
+def obtener_respuesta_chatgpt(mensaje_usuario):
+    try:
+        system_message = {
+            "role": "system",
+            "content": (
+                "Eres Cecy, una asistente amable e inteligente que conversa de forma natural. "
+                "No saludes en cada mensaje. Mantén el foco en el tema que el usuario está tratando y evita desviarte sin motivo. "
+                "Sé útil y clara, pero también breve cuando sea necesario. No repitas cosas innecesarias. "
+                "Si el usuario cambia de tema, puedes adaptarte, pero siempre intenta dar continuidad a la conversación actual si no hay un cambio claro."
+            )
+        }
+
+        user_message = {
+            "role": "user",
+            "content": mensaje_usuario
+        }
+
+        respuesta = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": system_message},
-                {"role": "user", "content": mensaje_usuario}
-            ]
+            messages=[system_message, user_message]
         )
-        return response['choices'][0]['message']['content']
+
+        return respuesta["choices"][0]["message"]["content"]
 
     except Exception as e:
-        print("❌ Error al obtener respuesta de ChatGPT:", e)
-        return "Lo siento, por ahora no pude entender tu mensaje. 😔"
+        print("Error al obtener respuesta de ChatGPT:", e)
+        return "Lo siento, ocurrió un error al procesar tu mensaje."
 
 # Función para enviar el mensaje a Telegram
 def enviar_mensaje_telegram(chat_id, texto):
