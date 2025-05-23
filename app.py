@@ -3,7 +3,8 @@ import os
 import requests
 import openai
 from dotenv import load_dotenv
-
+from collections import defaultdict
+conversaciones = defaultdict(list)
 # Cargar variables de entorno
 load_dotenv()
 
@@ -31,7 +32,6 @@ set_telegram_webhook()
 @app.route('/', methods=['GET'])
 def home():
     return '✅ CecyBot para Telegram está activo.'
-
 @app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.get_json()
@@ -42,45 +42,65 @@ def webhook():
         user_message = data["message"]["text"]
         print(f"💬 Mensaje recibido: {user_message}")
 
-        # Obtener respuesta de ChatGPT
-        bot_response = obtener_respuesta_chatgpt(user_message)
+        # Detectar saludo o despedida
+        if user_message.lower() in ["hola", "buenos días", "hey", "hi"]:
+            conversaciones[chat_id] = []  # reinicia conversación
+        elif user_message.lower() in ["adiós", "bye", "nos vemos", "gracias"]:
+            conversaciones[chat_id] = []  # termina conversación
+
+        # Obtener respuesta de ChatGPT con historial
+        bot_response = obtener_respuesta_chatgpt(chat_id, user_message)
         print(f"🤖 Respuesta generada: {bot_response}")
 
-        # Enviar respuesta a Telegram
         enviar_mensaje_telegram(chat_id, bot_response)
 
     return 'ok', 200
 
-# Función para obtener la respuesta de ChatGPT
-import openai
 
-def obtener_respuesta_chatgpt(mensaje_usuario):
+
+def obtener_respuesta_chatgpt(chat_id, mensaje_usuario):
     try:
-        system_message = {
-            "role": "system",
-            "content": (
-                "Eres Cecy, una asistente amable e inteligente que conversa de forma natural. "
-                "No saludes en cada mensaje. Mantén el foco en el tema que el usuario está tratando y evita desviarte sin motivo. "
-                "Sé útil y clara, pero también breve cuando sea necesario. No repitas cosas innecesarias. "
-                "Si el usuario cambia de tema, puedes adaptarte, pero siempre intenta dar continuidad a la conversación actual si no hay un cambio claro."
-            )
-        }
+        # Si es la primera vez, agregamos el mensaje system
+        if not conversaciones[chat_id]:
+            conversaciones[chat_id].append({
+                "role": "system",
+                "content": (
+                    "Eres Cecy, una asistente amable e inteligente que conversa de forma natural. "
+                    "Mantén el foco en el tema que el usuario está tratando, pero si detectas un cambio de tema, adáptate. "
+                    "No saludes a cada rato, solo al principio o si el usuario lo hace. "
+                    "Cuando el usuario se despida, termina la conversación. Sé clara, breve y útil."
+                )
+            })
 
-        user_message = {
+        # Agrega mensaje del usuario
+        conversaciones[chat_id].append({
             "role": "user",
             "content": mensaje_usuario
-        }
+        })
 
+        # Limita el historial si es muy largo
+        if len(conversaciones[chat_id]) > 15:
+            conversaciones[chat_id] = conversaciones[chat_id][-15:]
+
+        # Llamada a OpenAI
         respuesta = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
-            messages=[system_message, user_message]
+            messages=conversaciones[chat_id]
         )
 
-        return respuesta["choices"][0]["message"]["content"]
+        # Guardar respuesta en el historial
+        contenido = respuesta["choices"][0]["message"]["content"]
+        conversaciones[chat_id].append({
+            "role": "assistant",
+            "content": contenido
+        })
+
+        return contenido.strip()
 
     except Exception as e:
-        print("Error al obtener respuesta de ChatGPT:", e)
+        print("❌ Error al obtener respuesta de ChatGPT:", e)
         return "Lo siento, ocurrió un error al procesar tu mensaje."
+
 
 # Función para enviar el mensaje a Telegram
 def enviar_mensaje_telegram(chat_id, texto):
