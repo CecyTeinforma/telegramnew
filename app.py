@@ -41,7 +41,7 @@ def enviar_mensaje_telegram(chat_id, texto):
 
 def obtener_respuesta_chatgpt(chat_id, mensaje_usuario):
     try:
-        if not conversaciones[chat_id]:
+        if chat_id not in conversaciones:
             conversaciones[chat_id].append({
                 "role": "system",
                 "content": (
@@ -110,10 +110,7 @@ def whatsapp_webhook():
     user_message = request.values.get("Body", "").strip()
     from_number = request.values.get("From", "")
 
-    if not user_message:
-        print("⚠️ Mensaje vacío recibido de:", from_number)
-        print("🧪 request.values:", request.values)
-
+    print("🧪 request.values:", request.values)
     print("📥 WhatsApp dice:", user_message, "de", from_number)
 
     if from_number and user_message:
@@ -121,10 +118,12 @@ def whatsapp_webhook():
         bot_response = obtener_respuesta_chatgpt(chat_id, user_message)
         print("🤖 Respuesta:", bot_response)
         enviar_mensaje_whatsapp(from_number, bot_response)
+    else:
+        print("⚠️ Mensaje vacío o sin remitente")
 
     return 'ok', 200
 
-# ========= Arranque local o en Render ========= #
+# ========= Arranque local o Render ========= #
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
