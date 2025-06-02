@@ -95,11 +95,9 @@ def telegram_webhook():
 
     if "message" in data:
         chat_id = data["message"]["chat"]["id"]
-        user_message = data["message"]["text"]
+        user_message = data["message"].get("text", "").strip()
 
-        if user_message.lower() in ["hola", "buenos días"]:
-            conversaciones[chat_id] = []
-        elif user_message.lower() in ["adiós", "gracias"]:
+        if user_message.lower() in ["/reset", "reset"]:
             conversaciones[chat_id] = []
 
         bot_response = obtener_respuesta_chatgpt(chat_id, user_message)
@@ -112,6 +110,10 @@ def whatsapp_webhook():
     user_message = request.values.get("Body", "").strip()
     from_number = request.values.get("From", "")
 
+    if not user_message:
+        print("⚠️ Mensaje vacío recibido de:", from_number)
+        print("🧪 request.values:", request.values)
+
     print("📥 WhatsApp dice:", user_message, "de", from_number)
 
     if from_number and user_message:
@@ -122,6 +124,7 @@ def whatsapp_webhook():
 
     return 'ok', 200
 
-# ========= Arranque local ========= #
+# ========= Arranque local o en Render ========= #
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
