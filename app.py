@@ -22,7 +22,7 @@ openai.api_key = OPENAI_API_KEY
 # ========= Configuración Twilio (WhatsApp) ========= #
 TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
 TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
-TWILIO_WHATSAPP_FROM = 'whatsapp:+524523089105'  # Sandbox
+TWILIO_MESSAGING_SERVICE_SID = os.getenv('TWILIO_MESSAGING_SERVICE_SID')  # <-- usa Messaging Service
 client_twilio = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
 # ========= Historial de conversaciones ========= #
@@ -67,14 +67,10 @@ def obtener_respuesta_chatgpt(chat_id, mensaje_usuario):
 def enviar_mensaje_whatsapp(to_number, mensaje):
     try:
         message = client_twilio.messages.create(
-          messaging_service_sid='MG85c35a3917ea244e42f96bbd5afd7a14',
+            messaging_service_sid=TWILIO_MESSAGING_SERVICE_SID,
             to=to_number,
-             body=mensaje
+            body=mensaje
         )
-
-        
-
-        
         print("📤 WhatsApp enviado. SID:", message.sid)
     except Exception as e:
         print("❌ Error al enviar WhatsApp:", e)
@@ -109,9 +105,17 @@ def whatsapp_webhook():
     user_message = request.values.get("Body", "").strip()
     from_number = request.values.get("From", "")
 
+    print("📥 WhatsApp dice:", user_message, "de", from_number)
+
     if from_number:
+        # Validación por si no lleva el prefijo
+        if not from_number.startswith("whatsapp:"):
+            from_number = "whatsapp:" + from_number
+
         chat_id = from_number
         bot_response = obtener_respuesta_chatgpt(chat_id, user_message)
+
+        print("🤖 Respuesta:", bot_response)
         enviar_mensaje_whatsapp(from_number, bot_response)
 
     return 'ok', 200
