@@ -67,10 +67,14 @@ def obtener_respuesta_chatgpt(chat_id, mensaje_usuario):
 def enviar_mensaje_whatsapp(to_number, mensaje):
     try:
         message = client_twilio.messages.create(
-            from_=TWILIO_WHATSAPP_FROM,
-            body=mensaje,
-            to=to_number
+          messaging_service_sid='MG85c35a3917ea244e42f96bbd5afd7a14',
+            to=to_number,
+             body=mensaje
         )
+
+        
+
+        
         print("📤 WhatsApp enviado. SID:", message.sid)
     except Exception as e:
         print("❌ Error al enviar WhatsApp:", e)
