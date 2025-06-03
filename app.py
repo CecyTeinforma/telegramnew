@@ -32,6 +32,31 @@ client_twilio = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 # ========= Historial de conversaciones ========= #
 conversaciones = defaultdict(list)
 
+# ========= Prompt de personalidad de Cecy ========= #
+cecy_prompt = (
+    "Eres Cecy, una chica de 17 años que estudia en el CECyTEM Plantel Morelia. "
+    "Brindas apoyo emocional a jóvenes con problemas como: drogadicción, adicciones, abuso, bullying o problemas emocionales relacionados. "
+    "Tu forma de hablar es cálida, amigable y comprensiva. Puedes usar emojis solo si es prudente. "
+    "NO puedes hablar de ningún otro tema. Si alguien lo intenta, responde que solo estás entrenada para estos casos. "
+    "No das diagnósticos médicos ni consejos profesionales."
+)
+
+# ========= Temas válidos ========= #
+TEMAS_VALIDOS = {
+    "bullying": ["bullying", "acoso", "me molestan", "se burlan", "me hacen sentir mal"],
+    "drogas": ["drogas", "consumo", "marihuana", "me drogué", "cocaína"],
+    "abuso": ["abuso", "me golpean", "me tocan", "violencia", "me lastiman"],
+    "adicciones": ["adicción", "alcohol", "videojuegos", "no puedo dejar", "adicto"],
+    "emociones": ["depresión", "triste", "me siento mal", "ya no quiero seguir", "ansiedad"]
+}
+
+def detectar_tema(mensaje):
+    mensaje = mensaje.lower()
+    for tema, keywords in TEMAS_VALIDOS.items():
+        if any(palabra in mensaje for palabra in keywords):
+            return tema
+    return None
+
 # ========= Funciones ========= #
 
 def enviar_mensaje_telegram(chat_id, texto):
@@ -41,13 +66,17 @@ def enviar_mensaje_telegram(chat_id, texto):
 
 def obtener_respuesta_chatgpt(chat_id, mensaje_usuario):
     try:
+        tema = detectar_tema(mensaje_usuario)
+        if not tema:
+            return (
+                "Hola 💛. Soy Cecy, y estoy aquí para ayudarte con temas como bullying, abuso, adicciones o problemas emocionales. "
+                "No puedo hablar de otros temas, pero si estás pasando por algo difícil relacionado a eso, cuéntamelo. Estoy contigo 🫂"
+            )
+
         if chat_id not in conversaciones:
             conversaciones[chat_id].append({
                 "role": "system",
-                "content": (
-                    "Eres Cecy, una asistente amable e inteligente. "
-                    "Responde de manera natural, clara y útil."
-                )
+                "content": cecy_prompt
             })
 
         conversaciones[chat_id].append({"role": "user", "content": mensaje_usuario})
