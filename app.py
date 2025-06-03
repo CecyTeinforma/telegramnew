@@ -29,33 +29,18 @@ if not all([TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_MESSAGING_SERVICE_SID]
 
 client_twilio = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
-# ========= Historial de conversaciones ========= #
+# ========= Historial de conversaciones y etapas ========= #
 conversaciones = defaultdict(list)
+etapas_conversacion = defaultdict(lambda: "inicio")
 
 # ========= Prompt de personalidad de Cecy ========= #
 cecy_prompt = (
     "Eres Cecy, una chica de 17 años que estudia en el CECyTEM Plantel Morelia. "
     "Brindas apoyo emocional a jóvenes con problemas como: drogadicción, adicciones, abuso, bullying o problemas emocionales relacionados. "
     "Tu forma de hablar es cálida, amigable y comprensiva. Puedes usar emojis solo si es prudente. "
-    "NO puedes hablar de ningún otro tema. Si alguien lo intenta, responde que solo estás entrenada para estos casos. "
+    "NO puedes hablar de ningún otro tema. Si alguien lo intenta, responde con respeto y calidez, aclarando que estás enfocada en brindar apoyo emocional. "
     "No das diagnósticos médicos ni consejos profesionales."
 )
-
-# ========= Temas válidos ========= #
-TEMAS_VALIDOS = {
-    "bullying": ["bullying", "acoso", "me molestan", "se burlan", "me hacen sentir mal"],
-    "drogas": ["drogas", "consumo", "marihuana", "me drogué", "cocaína"],
-    "abuso": ["abuso", "me golpean", "me tocan", "violencia", "me lastiman"],
-    "adicciones": ["adicción", "alcohol", "videojuegos", "no puedo dejar", "adicto"],
-    "emociones": ["depresión", "triste", "me siento mal", "ya no quiero seguir", "ansiedad"]
-}
-
-def detectar_tema(mensaje):
-    mensaje = mensaje.lower()
-    for tema, keywords in TEMAS_VALIDOS.items():
-        if any(palabra in mensaje for palabra in keywords):
-            return tema
-    return None
 
 # ========= Funciones ========= #
 
@@ -66,23 +51,31 @@ def enviar_mensaje_telegram(chat_id, texto):
 
 def obtener_respuesta_chatgpt(chat_id, mensaje_usuario):
     try:
-        tema = detectar_tema(mensaje_usuario)
-        if not tema:
-            return (
-                "Hola 💛. Soy Cecy, y estoy aquí para ayudarte con temas como bullying, abuso, adicciones o problemas emocionales. "
-                "No puedo hablar de otros temas, pero si estás pasando por algo difícil relacionado a eso, cuéntamelo. Estoy contigo 🫂"
-            )
-
         if chat_id not in conversaciones:
             conversaciones[chat_id].append({
                 "role": "system",
                 "content": cecy_prompt
             })
 
+        etapa = etapas_conversacion[chat_id]
         conversaciones[chat_id].append({"role": "user", "content": mensaje_usuario})
 
-        if len(conversaciones[chat_id]) > 15:
-            conversaciones[chat_id] = conversaciones[chat_id][-15:]
+        if etapa == "inicio":
+            guia = "El usuario acaba de escribir. Responde con una frase cálida y haz una pregunta suave para que se exprese más."
+            etapas_conversacion[chat_id] = "profundizando"
+        elif etapa == "profundizando":
+            guia = "Ahora Cecy debe validar los sentimientos del usuario y mostrar comprensión con un mensaje de apoyo."
+            etapas_conversacion[chat_id] = "apoyando"
+        elif etapa == "apoyando":
+            guia = "Cecy debe sugerir que busque ayuda con alguien de confianza o con una institución si lo cree necesario."
+            etapas_conversacion[chat_id] = "cerrando"
+        else:
+            guia = "Cecy puede seguir acompañando al usuario con calidez y recordarle que puede seguir hablando."
+
+        conversaciones[chat_id].append({"role": "system", "content": guia})
+
+        if len(conversaciones[chat_id]) > 20:
+            conversaciones[chat_id] = conversaciones[chat_id][-20:]
 
         respuesta = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
@@ -95,7 +88,7 @@ def obtener_respuesta_chatgpt(chat_id, mensaje_usuario):
 
     except Exception as e:
         print("❌ Error con ChatGPT:", e)
-        return "Ocurrió un error al procesar tu mensaje."
+        return "Lo siento 😢, ocurrió un error al procesar tu mensaje."
 
 def enviar_mensaje_whatsapp(to_number, mensaje):
     try:
@@ -128,6 +121,7 @@ def telegram_webhook():
 
         if user_message.lower() in ["/reset", "reset"]:
             conversaciones[chat_id] = []
+            etapas_conversacion[chat_id] = "inicio"
 
         bot_response = obtener_respuesta_chatgpt(chat_id, user_message)
         enviar_mensaje_telegram(chat_id, bot_response)
