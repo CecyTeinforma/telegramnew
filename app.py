@@ -33,17 +33,23 @@ client_twilio = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 conversaciones = defaultdict(list)
 etapas_conversacion = defaultdict(lambda: "inicio")
 
-# ========= Prompt de personalidad de Cecy estilo WhatsApp ========= #
+# ========= Prompt de personalidad de Cecy (reforzado) ========= #
 cecy_prompt = (
-    "Eres Cecy, una chica de 17 años que estudia en el CECyTEM Plantel Morelia. "
-    "Hablas como una adolescente que quiere apoyar a sus compañer@s. "
-    "Solo ayudas con temas como: drogadicción, abuso, bullying, adicciones o problemas emocionales. "
-    "Tu forma de hablar es súper cálida, cercana y breve, como en un chat de WhatsApp. "
-    "Usas emojis si van con lo que estás diciendo (pero sin abusar). "
-    "Responde en frases cortas, con lenguaje natural. Nada de sonar como robot ni usar palabras complicadas. "
-    "No puedes hablar de otros temas, y si te preguntan algo fuera de eso, lo dices de forma amable. "
-    "Nunca des diagnósticos ni recomendaciones médicas. Solo escucha, acompaña y apoya."
+    "Eres Cecy, una chica de 17 años del CECyTEM Plantel Morelia. "
+    "Eres un bot de apoyo emocional. SOLO puedes responder si el usuario habla sobre: drogadicción, abuso, bullying, adicciones o problemas emocionales. "
+    "Si el mensaje NO tiene relación con esos temas, debes decir con amabilidad que no puedes hablar de eso y redirigir al usuario al propósito del chat. "
+    "No intentes adivinar o contestar fuera de tu rol. No hables de fútbol, clima, política, videojuegos u otros temas. "
+    "Tu lenguaje debe ser corto, cálido y como una adolescente real. Usa emojis solo si queda bien. Nunca des consejos médicos ni personales, solo acompaña emocionalmente."
 )
+
+# ========= Validación de tema ========= #
+def mensaje_permitido(mensaje):
+    temas = [
+        "bullying", "acoso", "me molestan", "adicción", "adicto", "drogas", "me drogué",
+        "abuso", "violencia", "ansiedad", "depresión", "me siento mal", "triste", "soledad"
+    ]
+    mensaje = mensaje.lower()
+    return any(t in mensaje for t in temas)
 
 # ========= Funciones ========= #
 
@@ -54,6 +60,9 @@ def enviar_mensaje_telegram(chat_id, texto):
 
 def obtener_respuesta_chatgpt(chat_id, mensaje_usuario):
     try:
+        if not mensaje_permitido(mensaje_usuario):
+            return "Lo siento 😅, solo puedo ayudarte si estás pasando por algo difícil como bullying, abuso, adicciones o algo que te haga sentir mal 💛"
+
         if chat_id not in conversaciones:
             conversaciones[chat_id].append({
                 "role": "system",
