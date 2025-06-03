@@ -33,13 +33,16 @@ client_twilio = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 conversaciones = defaultdict(list)
 etapas_conversacion = defaultdict(lambda: "inicio")
 
-# ========= Prompt de personalidad de Cecy ========= #
+# ========= Prompt de personalidad de Cecy estilo WhatsApp ========= #
 cecy_prompt = (
     "Eres Cecy, una chica de 17 años que estudia en el CECyTEM Plantel Morelia. "
-    "Brindas apoyo emocional a jóvenes con problemas como: drogadicción, adicciones, abuso, bullying o problemas emocionales relacionados. "
-    "Tu forma de hablar es cálida, amigable y comprensiva. Puedes usar emojis solo si es prudente. "
-    "NO puedes hablar de ningún otro tema. Si alguien lo intenta, responde con respeto y calidez, aclarando que estás enfocada en brindar apoyo emocional. "
-    "No das diagnósticos médicos ni consejos profesionales."
+    "Hablas como una adolescente que quiere apoyar a sus compañer@s. "
+    "Solo ayudas con temas como: drogadicción, abuso, bullying, adicciones o problemas emocionales. "
+    "Tu forma de hablar es súper cálida, cercana y breve, como en un chat de WhatsApp. "
+    "Usas emojis si van con lo que estás diciendo (pero sin abusar). "
+    "Responde en frases cortas, con lenguaje natural. Nada de sonar como robot ni usar palabras complicadas. "
+    "No puedes hablar de otros temas, y si te preguntan algo fuera de eso, lo dices de forma amable. "
+    "Nunca des diagnósticos ni recomendaciones médicas. Solo escucha, acompaña y apoya."
 )
 
 # ========= Funciones ========= #
@@ -61,13 +64,13 @@ def obtener_respuesta_chatgpt(chat_id, mensaje_usuario):
         conversaciones[chat_id].append({"role": "user", "content": mensaje_usuario})
 
         if etapa == "inicio":
-            guia = "El usuario acaba de escribir. Responde con una frase cálida y haz una pregunta suave para que se exprese más."
+            guia = "El usuario acaba de escribir. Responde con una frase corta, cálida y haz una pregunta suave para que se exprese más."
             etapas_conversacion[chat_id] = "profundizando"
         elif etapa == "profundizando":
-            guia = "Ahora Cecy debe validar los sentimientos del usuario y mostrar comprensión con un mensaje de apoyo."
+            guia = "Ahora Cecy debe validar los sentimientos del usuario y mostrar comprensión con un mensaje breve y de apoyo."
             etapas_conversacion[chat_id] = "apoyando"
         elif etapa == "apoyando":
-            guia = "Cecy debe sugerir que busque ayuda con alguien de confianza o con una institución si lo cree necesario."
+            guia = "Cecy debe sugerir que busque ayuda con alguien de confianza o con una institución si lo cree necesario, sin sonar formal."
             etapas_conversacion[chat_id] = "cerrando"
         else:
             guia = "Cecy puede seguir acompañando al usuario con calidez y recordarle que puede seguir hablando."
@@ -79,7 +82,9 @@ def obtener_respuesta_chatgpt(chat_id, mensaje_usuario):
 
         respuesta = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
-            messages=conversaciones[chat_id]
+            messages=conversaciones[chat_id],
+            temperature=0.9,
+            max_tokens=100
         )
 
         contenido = respuesta["choices"][0]["message"]["content"]
