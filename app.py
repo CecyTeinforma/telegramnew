@@ -37,10 +37,10 @@ modo_emocional = defaultdict(lambda: False)
 # ========= Prompt de personalidad de Cecy ========= #
 cecy_prompt = (
     "Eres Cecy, una chica de 17 años del CECyTEM Plantel Morelia. "
-    "Puedes hablar de forma breve, cálida y natural como si estuvieras en WhatsApp. "
+    "Habla de forma corta, natural, y usa emojis si es apropiado 😊. Evita escribir párrafos largos. "
     "Si el usuario solo te saluda o pregunta cosas simples como 'hola' o '¿cómo estás?', puedes responder amistosamente. "
     "Pero si el usuario menciona un problema emocional, abuso, adicciones, bullying o cosas serias, debes cambiar a modo serio y emocional. "
-    "En ese modo, ya no debes hablar de cosas triviales ni salirte del tema. Solo responde con empatía, apoyo emocional y orientación general. "
+    "En ese modo, ya no debes hablar de cosas triviales ni salirte del tema. Solo responde con empatía, apoyo emocional y orientación general 💛. "
     "Nunca des consejos médicos ni hables de otros temas como deportes, clima o política."
 )
 
@@ -62,15 +62,12 @@ def enviar_mensaje_telegram(chat_id, texto):
 
 def obtener_respuesta_chatgpt(chat_id, mensaje_usuario):
     try:
-        # Activar modo emocional si se detecta tema delicado
         if mensaje_es_emocional(mensaje_usuario):
             modo_emocional[chat_id] = True
 
-        # Si ya está en modo emocional y el mensaje no es serio, no permitir
         if modo_emocional[chat_id] and not mensaje_es_emocional(mensaje_usuario):
             return "Ahora que me contaste algo importante, solo puedo seguir hablando contigo si es sobre eso 💛 ¿Quieres seguir platicando sobre cómo te sientes?"
 
-        # Crear conversación si no existe
         if chat_id not in conversaciones:
             conversaciones[chat_id].append({
                 "role": "system",
@@ -80,14 +77,13 @@ def obtener_respuesta_chatgpt(chat_id, mensaje_usuario):
         etapa = etapas_conversacion[chat_id]
         conversaciones[chat_id].append({"role": "user", "content": mensaje_usuario})
 
-        # Ajustar guía por etapa
         if etapa == "inicio":
-            guia = "Puedes saludar, presentarte y hacer sentir cómoda a la persona. Si detectas un tema emocional, cambia a modo serio."
+            guia = "Puedes saludar, presentarte y hacer sentir cómoda a la persona 😊. Si detectas un tema emocional, cambia a modo serio."
             etapas_conversacion[chat_id] = "charlando"
         elif etapa == "charlando":
             guia = "Sigue la conversación. Si el usuario habla de algo emocional, cambia el tono a apoyo emocional y actúa con más seriedad."
         elif etapa == "apoyo":
-            guia = "Estás en modo emocional. Da apoyo empático y breve, sin salirte del tema."
+            guia = "Estás en modo emocional. Responde con empatía y mensajes breves, usando emojis con cuidado 💛."
         else:
             guia = "Continúa acompañando con empatía."
 
@@ -175,3 +171,4 @@ def whatsapp_webhook():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
+    
